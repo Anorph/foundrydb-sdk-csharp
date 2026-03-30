@@ -104,14 +104,15 @@ Console.WriteLine();
 Console.WriteLine(">> Listing database users...");
 var users = await client.ListUsersAsync(newService.Id);
 foreach (var u in users)
-    Console.WriteLine($"   {u.Username}  admin={u.IsAdmin}");
+    Console.WriteLine($"   {u.Username}  roles={string.Join(",", u.Roles ?? new List<string>())}");
 
 if (users.Count > 0)
 {
-    var adminUser = users.FirstOrDefault(u => u.IsAdmin == true) ?? users[0];
+    var adminUser = users[0];
     Console.WriteLine($">> Revealing password for '{adminUser.Username}'...");
-    var password2 = await client.RevealPasswordAsync(newService.Id, adminUser.Username);
-    Console.WriteLine($"   Password: {password2}");
+    var creds = await client.RevealPasswordAsync(newService.Id, adminUser.Username);
+    Console.WriteLine($"   Password: {creds.Password}");
+    Console.WriteLine($"   Connection: {creds.ConnectionString}");
 }
 Console.WriteLine();
 

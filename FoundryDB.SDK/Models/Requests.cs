@@ -65,6 +65,11 @@ public class CreateServiceRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? AllowedCidrs { get; set; }
 
+    /// <summary>Preferred maintenance window (e.g. "sun:03:00-sun:04:00").</summary>
+    [JsonPropertyName("maintenance_window")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? MaintenanceWindow { get; set; }
+
     /// <summary>
     /// Per-request organisation override. When set, the SDK sends this value in
     /// X-Active-Org-ID instead of the client-level OrganizationId.

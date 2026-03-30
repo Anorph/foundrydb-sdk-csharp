@@ -32,60 +32,31 @@ public enum DatabaseType
 
 /// <summary>
 /// High-level lifecycle state of a managed service.
+/// Values match the lowercase strings returned by the FoundryDB API.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ServiceStatus
 {
-    [JsonPropertyName("Pending")]
+    [JsonPropertyName("pending")]
     Pending,
 
-    [JsonPropertyName("SetupNetwork")]
-    SetupNetwork,
+    [JsonPropertyName("provisioning")]
+    Provisioning,
 
-    [JsonPropertyName("SetupServer")]
-    SetupServer,
-
-    [JsonPropertyName("SetupAgent")]
-    SetupAgent,
-
-    [JsonPropertyName("SetupDNS")]
-    SetupDNS,
-
-    [JsonPropertyName("SetupLB")]
-    SetupLB,
-
-    [JsonPropertyName("Running")]
+    [JsonPropertyName("running")]
     Running,
 
-    [JsonPropertyName("Stopped")]
+    [JsonPropertyName("stopped")]
     Stopped,
 
-    [JsonPropertyName("Restarting")]
-    Restarting,
+    [JsonPropertyName("error")]
+    Error,
 
-    [JsonPropertyName("Checkup")]
-    Checkup,
+    [JsonPropertyName("deleting")]
+    Deleting,
 
-    [JsonPropertyName("Upgrading")]
-    Upgrading,
-
-    [JsonPropertyName("Scaling")]
-    Scaling,
-
-    [JsonPropertyName("DeleteService")]
-    DeleteService,
-
-    [JsonPropertyName("DeleteDNS")]
-    DeleteDNS,
-
-    [JsonPropertyName("DeleteServer")]
-    DeleteServer,
-
-    [JsonPropertyName("DeleteNetwork")]
-    DeleteNetwork,
-
-    [JsonPropertyName("Failed")]
-    Failed
+    [JsonPropertyName("deleted")]
+    Deleted
 }
 
 /// <summary>
@@ -117,5 +88,8 @@ public enum BackupType
     Full,
 
     [JsonPropertyName("incremental")]
-    Incremental
+    Incremental,
+
+    [JsonPropertyName("pitr")]
+    PITR
 }

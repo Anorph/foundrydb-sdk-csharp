@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FoundryDB.SDK.Models;
 
 namespace FoundryDB.SDK.Backups;
@@ -50,6 +51,8 @@ public class BackupsApi
 
     /// <summary>
     /// Triggers an on-demand backup for a service.
+    /// The API returns a <c>backup_id</c> field in the response envelope; this method
+    /// normalises that into a <see cref="Backup"/> object consistent with <see cref="ListAsync"/>.
     /// </summary>
     /// <param name="serviceId">Service UUID.</param>
     /// <param name="req">Backup parameters (type, optional label).</param>
@@ -62,6 +65,27 @@ public class BackupsApi
 
         using var doc = JsonDocument.Parse(json);
 
+        // Guard against a null or non-object root (e.g. JSON literal "null").
+        if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            throw new FoundryDBException(200, "Deserialization Error", "Response did not contain a backup object.");
+
+        // Primary response format: { "backup_id": "...", "status": "...", "message": "...", "task_id": "..." }
+        if (doc.RootElement.TryGetProperty("backup_id", out var backupIdEl))
+        {
+            var backupId = backupIdEl.GetString() ?? string.Empty;
+            var status = doc.RootElement.TryGetProperty("status", out var statusEl)
+                ? statusEl.GetString() ?? string.Empty
+                : string.Empty;
+            return new Backup
+            {
+                Id = backupId,
+                ServiceId = serviceId,
+                Status = status,
+                BackupType = req.BackupType.HasValue ? req.BackupType.Value.ToString().ToLowerInvariant() : null
+            };
+        }
+
+        // Secondary format: { "backup": { ... } } wrapper
         if (doc.RootElement.TryGetProperty("backup", out var el))
         {
             var b = JsonSerializer.Deserialize<Backup>(el.GetRawText(), FoundryDBClient.JsonOptions);

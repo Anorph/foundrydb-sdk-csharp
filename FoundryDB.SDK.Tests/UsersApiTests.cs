@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using FoundryDB.SDK;
+using FoundryDB.SDK.Models;
 using Xunit;
 
 namespace FoundryDB.SDK.Tests;
@@ -61,8 +62,8 @@ public class UsersApiTests
     {
         var body = JsonSerializer.Serialize(new[]
         {
-            new { username = "app_user", is_admin = true, databases = new[] { "defaultdb" } },
-            new { username = "readonly", is_admin = false, databases = new[] { "defaultdb", "analytics" } }
+            new { username = "app_user", roles = new[] { "readwrite" } },
+            new { username = "readonly", roles = new[] { "readonly" } }
         });
         using var client = BuildClient(_ => Responses.Ok(body));
 
@@ -70,11 +71,9 @@ public class UsersApiTests
 
         Assert.Equal(2, result.Count);
         Assert.Equal("app_user", result[0].Username);
-        Assert.Equal(true, result[0].IsAdmin);
-        Assert.Contains("defaultdb", result[0].Databases!);
+        Assert.Contains("readwrite", result[0].Roles!);
         Assert.Equal("readonly", result[1].Username);
-        Assert.Equal(false, result[1].IsAdmin);
-        Assert.Equal(2, result[1].Databases!.Count);
+        Assert.Contains("readonly", result[1].Roles!);
     }
 
     [Fact]
@@ -84,7 +83,7 @@ public class UsersApiTests
         {
             users = new[]
             {
-                new { username = "wrapped_user", is_admin = false }
+                new { username = "wrapped_user", roles = new[] { "admin" } }
             }
         });
         using var client = BuildClient(_ => Responses.Ok(body));
@@ -136,7 +135,7 @@ public class UsersApiTests
         {
             method = req.Method;
             path = req.RequestUri?.PathAndQuery;
-            return Responses.Ok("{\"password\":\"secret\"}");
+            return Responses.Ok("{\"username\":\"app_user\",\"password\":\"secret\",\"host\":\"db.example.com\",\"port\":5432,\"database\":\"defaultdb\",\"connection_string\":\"postgresql://app_user:secret@db.example.com:5432/defaultdb\"}");
         });
 
         await client.Users.RevealPasswordAsync("svc-1", "app_user");
@@ -162,36 +161,27 @@ public class UsersApiTests
     }
 
     [Fact]
-    public async Task RevealPasswordAsync_ExtractsPasswordFromPasswordField()
+    public async Task RevealPasswordAsync_ReturnsFullCredentials()
     {
-        using var client = BuildClient(_ => Responses.Ok("{\"password\":\"hunter2\"}"));
+        var body = JsonSerializer.Serialize(new
+        {
+            username = "app_user",
+            password = "hunter2",
+            host = "db.example.com",
+            port = 5432L,
+            database = "defaultdb",
+            connection_string = "postgresql://app_user:hunter2@db.example.com:5432/defaultdb"
+        });
+        using var client = BuildClient(_ => Responses.Ok(body));
 
-        var pw = await client.Users.RevealPasswordAsync("svc-1", "app_user");
+        var creds = await client.Users.RevealPasswordAsync("svc-1", "app_user");
 
-        Assert.Equal("hunter2", pw);
-    }
-
-    [Fact]
-    public async Task RevealPasswordAsync_ExtractsPassword_FromRootString()
-    {
-        // Some endpoints return the password as a plain JSON string at root level.
-        using var client = BuildClient(_ => Responses.Ok("\"p4ssw0rd\""));
-
-        var pw = await client.Users.RevealPasswordAsync("svc-1", "app_user");
-
-        Assert.Equal("p4ssw0rd", pw);
-    }
-
-    [Fact]
-    public async Task RevealPasswordAsync_NoPasswordField_ThrowsFoundryDBException()
-    {
-        // Response has neither "password" field nor root string.
-        using var client = BuildClient(_ => Responses.Ok("{\"something\":\"else\"}"));
-
-        var ex = await Assert.ThrowsAsync<FoundryDBException>(() =>
-            client.Users.RevealPasswordAsync("svc-1", "user"));
-        Assert.Equal(200, ex.StatusCode);
-        Assert.Contains("password", ex.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("app_user", creds.Username);
+        Assert.Equal("hunter2", creds.Password);
+        Assert.Equal("db.example.com", creds.Host);
+        Assert.Equal(5432L, creds.Port);
+        Assert.Equal("defaultdb", creds.Database);
+        Assert.NotNull(creds.ConnectionString);
     }
 
     [Fact]

@@ -49,12 +49,12 @@ public class UsersApi
     }
 
     /// <summary>
-    /// Reveals the plaintext password for a database user.
+    /// Reveals the full connection credentials (including plaintext password) for a database user.
     /// </summary>
     /// <param name="serviceId">Service UUID.</param>
     /// <param name="username">Database username.</param>
-    /// <returns>The plaintext password.</returns>
-    public async Task<string> RevealPasswordAsync(string serviceId, string username, CancellationToken ct = default)
+    /// <returns>Full connection credentials including host, port, database, and connection string.</returns>
+    public async Task<RevealPasswordResponse> RevealPasswordAsync(string serviceId, string username, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(serviceId)) throw new ArgumentException("Service ID must not be empty.", nameof(serviceId));
         if (string.IsNullOrWhiteSpace(username)) throw new ArgumentException("Username must not be empty.", nameof(username));
@@ -65,15 +65,10 @@ public class UsersApi
             orgId: null,
             ct).ConfigureAwait(false);
 
-        using var doc = JsonDocument.Parse(json);
+        var creds = JsonSerializer.Deserialize<RevealPasswordResponse>(json, FoundryDBClient.JsonOptions);
+        if (creds is null || string.IsNullOrEmpty(creds.Password))
+            throw new FoundryDBException(200, "Deserialization Error", "Response did not contain a password field.");
 
-        if (doc.RootElement.TryGetProperty("password", out var pw))
-            return pw.GetString() ?? string.Empty;
-
-        // Some endpoints return the password at the root level as a plain string.
-        if (doc.RootElement.ValueKind == JsonValueKind.String)
-            return doc.RootElement.GetString() ?? string.Empty;
-
-        throw new FoundryDBException(200, "Deserialization Error", "Response did not contain a password field.");
+        return creds;
     }
 }

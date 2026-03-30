@@ -70,7 +70,7 @@ public class BackupsApiTests
     [Fact]
     public async Task ListAsync_DeserializesBackups_FromRootArray()
     {
-        var body = JsonSerializer.Serialize(new[]
+        var body = JsonSerializer.Serialize(new object[]
         {
             new
             {
@@ -297,13 +297,15 @@ public class BackupsApiTests
     public async Task TriggerAsync_SendsCorrectJsonBody_WithBackupType()
     {
         string? requestBody = null;
-        using var client = BuildClient(async req =>
+        var cfg = new FoundryDBConfig { ApiUrl = "https://api.foundrydb.com", Token = "tok" };
+        var http = new HttpClient(new MockHttpHandler(async (HttpRequestMessage req) =>
         {
             requestBody = req.Content is not null
                 ? await req.Content.ReadAsStringAsync()
                 : null;
             return Responses.Ok("{\"backup\":{\"id\":\"b1\",\"service_id\":\"svc-1\",\"status\":\"pending\"}}");
-        });
+        })) { BaseAddress = new Uri(cfg.ApiUrl) };
+        using var client = new FoundryDBClient(cfg, http);
 
         await client.Backups.TriggerAsync("svc-1", new CreateBackupRequest
         {
@@ -314,7 +316,7 @@ public class BackupsApiTests
         Assert.NotNull(requestBody);
         using var doc = System.Text.Json.JsonDocument.Parse(requestBody!);
         Assert.True(doc.RootElement.TryGetProperty("backup_type", out var btEl));
-        Assert.Equal("Full", btEl.GetString());
+        Assert.Equal("full", btEl.GetString());
         Assert.True(doc.RootElement.TryGetProperty("label", out var labelEl));
         Assert.Equal("nightly", labelEl.GetString());
     }

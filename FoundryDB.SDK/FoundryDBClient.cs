@@ -44,7 +44,9 @@ public class FoundryDBClient : IDisposable
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        // Use snake_case_lower naming policy for enum values so they serialise as
+        // "full", "incremental", "pitr", "postgresql", etc. matching the API wire format.
+        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) }
     };
 
     private readonly HttpClient _http;
@@ -96,6 +98,7 @@ public class FoundryDBClient : IDisposable
         _http.BaseAddress = new Uri(config.ApiUrl.TrimEnd('/'));
         _http.DefaultRequestHeaders.Accept.Clear();
         _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        _http.DefaultRequestHeaders.UserAgent.ParseAdd("FoundryDB-CSharp-SDK/1.0");
 
         if (!string.IsNullOrWhiteSpace(config.Token))
         {
@@ -146,8 +149,8 @@ public class FoundryDBClient : IDisposable
     public Task<List<DatabaseUser>> ListUsersAsync(string serviceId, CancellationToken ct = default)
         => Users.ListAsync(serviceId, ct);
 
-    /// <summary>Reveals a user's password. Shorthand for <c>Users.RevealPasswordAsync()</c>.</summary>
-    public Task<string> RevealPasswordAsync(string serviceId, string username, CancellationToken ct = default)
+    /// <summary>Reveals full connection credentials for a user. Shorthand for <c>Users.RevealPasswordAsync()</c>.</summary>
+    public Task<RevealPasswordResponse> RevealPasswordAsync(string serviceId, string username, CancellationToken ct = default)
         => Users.RevealPasswordAsync(serviceId, username, ct);
 
     /// <summary>Lists backups. Shorthand for <c>Backups.ListAsync()</c>.</summary>

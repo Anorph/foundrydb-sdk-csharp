@@ -9,16 +9,23 @@ namespace FoundryDB.SDK.Tests;
 /// <summary>
 /// Intercepts outgoing HTTP requests and delegates them to an in-memory handler function.
 /// Allows tests to assert on request properties and return pre-built responses.
+/// Supports both synchronous and asynchronous handler delegates.
 /// </summary>
 public class MockHttpHandler : HttpMessageHandler
 {
-    private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;
+    private readonly Func<HttpRequestMessage, Task<HttpResponseMessage>> _handler;
 
     public MockHttpHandler(Func<HttpRequestMessage, HttpResponseMessage> handler)
+    {
+        if (handler is null) throw new ArgumentNullException(nameof(handler));
+        _handler = req => Task.FromResult(handler(req));
+    }
+
+    public MockHttpHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> handler)
         => _handler = handler ?? throw new ArgumentNullException(nameof(handler));
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
-        => Task.FromResult(_handler(request));
+        => _handler(request);
 }
 
 /// <summary>

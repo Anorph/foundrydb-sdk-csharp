@@ -55,6 +55,10 @@ public class Service
     [JsonPropertyName("encryption_enabled")]
     public bool? EncryptionEnabled { get; set; }
 
+    /// <summary>Replication mode for multi-node clusters (e.g. "sync", "async").</summary>
+    [JsonPropertyName("replication_mode")]
+    public string? ReplicationMode { get; set; }
+
     /// <summary>Allowed CIDR blocks for firewall access.</summary>
     [JsonPropertyName("allowed_cidrs")]
     public List<string>? AllowedCidrs { get; set; }
@@ -62,6 +66,10 @@ public class Service
     /// <summary>DNS records exposed to clients.</summary>
     [JsonPropertyName("dns_records")]
     public List<DnsRecord>? DnsRecords { get; set; }
+
+    /// <summary>Preferred maintenance window (e.g. "sun:03:00-sun:04:00").</summary>
+    [JsonPropertyName("maintenance_window")]
+    public string? MaintenanceWindow { get; set; }
 
     /// <summary>Organisation this service belongs to.</summary>
     [JsonPropertyName("organization_id")]

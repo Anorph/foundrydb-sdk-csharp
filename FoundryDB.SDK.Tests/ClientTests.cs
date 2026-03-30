@@ -369,15 +369,15 @@ public class ClientTests
         var handler = new MockHttpHandler(req =>
         {
             capturedPath = req.RequestUri?.PathAndQuery;
-            return Responses.Ok("{\"password\":\"secret123\"}");
+            return Responses.Ok("{\"username\":\"app_user\",\"password\":\"secret123\",\"host\":\"db.example.com\",\"port\":5432,\"database\":\"defaultdb\",\"connection_string\":\"postgresql://app_user:secret123@db.example.com:5432/defaultdb\"}");
         });
 
         var cfg = new FoundryDBConfig { ApiUrl = "https://api.foundrydb.com", Token = "tok" };
         using var client = new FoundryDBClient(cfg, new HttpClient(handler) { BaseAddress = new Uri(cfg.ApiUrl) });
-        var pw = await client.RevealPasswordAsync("svc-1", "app_user");
+        var creds = await client.RevealPasswordAsync("svc-1", "app_user");
 
         Assert.Equal("/managed-services/svc-1/database-users/app_user/reveal-password", capturedPath);
-        Assert.Equal("secret123", pw);
+        Assert.Equal("secret123", creds.Password);
     }
 
     [Fact]

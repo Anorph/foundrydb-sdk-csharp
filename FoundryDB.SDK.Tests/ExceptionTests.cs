@@ -58,10 +58,18 @@ public class ExceptionTests
     [Fact]
     public void CanBeThrown_AndCaught()
     {
-        var thrownEx = Assert.Throws<FoundryDBException>(() =>
-            throw new FoundryDBException(403, "Forbidden", "Access denied."));
+        FoundryDBException? thrownEx = null;
+        try
+        {
+            throw new FoundryDBException(403, "Forbidden", "Access denied.");
+        }
+        catch (FoundryDBException ex)
+        {
+            thrownEx = ex;
+        }
 
-        Assert.Equal(403, thrownEx.StatusCode);
+        Assert.NotNull(thrownEx);
+        Assert.Equal(403, thrownEx!.StatusCode);
         Assert.Equal("Forbidden", thrownEx.Title);
         Assert.Equal("Access denied.", thrownEx.Detail);
     }
