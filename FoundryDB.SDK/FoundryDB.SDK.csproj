@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12.0</LangVersion>
+    <AssemblyName>FoundryDB.SDK</AssemblyName>
+    <RootNamespace>FoundryDB.SDK</RootNamespace>
+    <Version>0.1.0</Version>
+    <Authors>FoundryDB</Authors>
+    <Description>C# SDK for the FoundryDB managed database platform</Description>
+    <PackageTags>foundrydb;database;managed;postgresql;mysql;mongodb;valkey;kafka</PackageTags>
+    <PackageProjectUrl>https://github.com/Anorph/foundrydb-sdk-csharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Anorph/foundrydb-sdk-csharp</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>
