@@ -296,6 +296,16 @@ var users  = await client.Users.ListAsync(svc.Id, ct);
 var backup = await client.Backups.TriggerAsync(svc.Id, new CreateBackupRequest(), ct);
 ```
 
+## Testing
+
+```bash
+dotnet test FoundryDB.SDK.Tests/
+```
+
+The test suite uses xUnit with a custom `MockHttpHandler` to intercept HTTP calls without making real network requests. Tests cover all public methods across `FoundryDBClient`, `ServicesApi`, `OrganizationsApi`, `UsersApi`, `BackupsApi`, and `FoundryDBException`, including success paths, error paths, auth header assertions, and `WaitForRunningAsync` polling behaviour.
+
+> Note: `dotnet` must be installed (net8.0 SDK or later). It is not bundled with this repository.
+
 ## Running the Example
 
 ```bash
